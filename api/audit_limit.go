@@ -88,10 +88,17 @@ func AuditLimit(r *ghttp.Request) {
 		// 获取剩余次数
 		normalRemain := normalLimiter.TokensAt(time.Now())
 		g.Log().Debug(ctx, "remain3.5", normalRemain)
+		// 获取剩余次数
+		remain := normalLimiter.TokensAt(time.Now())
 		if normalRemain < 1 {
 			r.Response.Status = 400
+			creatInterval := config.PER / time.Duration(config.LIMIT)
+			// 转换为秒
+			creatIntervalSec := float64(creatInterval.Seconds())
+			// 等待时间
+			wait := (1 - remain) * creatIntervalSec
 			r.Response.WriteJson(g.Map{
-				"detail": "GPT-3 模型的请求已达到限制，请稍后再试。",
+				"detail": "GPT-3.5 模型的请求已达到限制，请 " + fmt.Sprintf("%.2f", wait) + " 秒后再试。",
 			})
 			return
 		} else {
